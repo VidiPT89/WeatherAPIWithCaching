@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Weather API · Cache</title>
+  <meta name="theme-color" content="#050505" />
+  <meta name="description" content="Consulta o clima com cache Redis de 30 minutos, histórico e rate limit." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Karla:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <!--
+    THESIS: Night observatory console for live weather, not a generic forecast card grid.
+    OWN-WORLD: Black field, burnt orange mercury, amber readout type (Barlow Condensed + Karla).
+    STORY: Search a city, see cache vs live, keep a personal log.
+    FIRST VIEWPORT: Splash then station mast + search + mercury column.
+    FORM: Brief-pinned ividi.dev orange / burnt yellow / black.
+    FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
+  -->
+  <div class="splash" id="splash">
+    <div class="splash-mercury" aria-hidden="true"></div>
+    <p class="splash-mark">iVidi</p>
+    <h1 class="splash-title">Weather Cache</h1>
+    <p class="splash-by">Developed by David Arsénio Martins</p>
+  </div>
+
+  <div class="sky" aria-hidden="true">
+    <span class="ember e1"></span>
+    <span class="ember e2"></span>
+    <span class="ember e3"></span>
+  </div>
+
+  <header class="mast">
+    <div class="brand">
+      <svg class="mark" viewBox="0 0 48 48" aria-hidden="true">
+        <circle cx="24" cy="18" r="10" fill="#FF7A00" />
+        <rect x="22" y="26" width="4" height="16" rx="2" fill="#FFAA00" />
+      </svg>
+      <div>
+        <p class="brand-kicker" data-i18n="brand">Weather API</p>
+        <p class="brand-sub" data-i18n="brandSub">Redis · 30 min</p>
+      </div>
+    </div>
+    <div class="mast-actions">
+      <button id="lang-toggle" class="lang" type="button" aria-label="Language">
+        <span data-lang="pt">PT</span>
+        <span class="slash">/</span>
+        <span data-lang="en">EN</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="stage">
+    <section class="hero">
+      <h1 data-i18n="headline">O ar da cidade, sem esperar pelo mundo.</h1>
+      <p class="lede" data-i18n="lede">Consulta o OpenWeather uma vez. Durante 30 minutos, o Redis responde por ti — mais rápido, com menos pedidos e o teu histórico intacto.</p>
+      <form id="search-form" class="search">
+        <label class="sr-only" for="city" data-i18n="cityLabel">Cidade</label>
+        <input id="city" name="city" autocomplete="off" spellcheck="false" data-i18n-placeholder="cityPh" placeholder="Lisboa, Porto, Tokyo…" />
+        <button type="submit" id="submit-btn" data-i18n="search">Consultar</button>
+      </form>
+      <p class="hint" id="status" data-i18n="hint">Escreve uma cidade e lê a leitura ao vivo ou em cache.</p>
+    </section>
+
+    <section class="board" id="board" hidden>
+      <div class="column">
+        <div class="mercury-wrap">
+          <div class="mercury-glass">
+            <div class="mercury-fill" id="mercury"></div>
+          </div>
+          <p class="temp" id="temp">—</p>
+          <p class="unit">°C</p>
+        </div>
+      </div>
+      <div class="readout">
+        <p class="city-name" id="city-name"></p>
+        <p class="desc" id="desc"></p>
+        <div class="pills">
+          <span class="pill" id="cache-pill"></span>
+          <span class="pill dim" id="country-pill"></span>
+        </div>
+        <dl class="metrics">
+          <div><dt data-i18n="feels">Sensação</dt><dd id="feels">—</dd></div>
+          <div><dt data-i18n="humidity">Humidade</dt><dd id="humidity">—</dd></div>
+          <div><dt data-i18n="wind">Vento</dt><dd id="wind">—</dd></div>
+          <div><dt data-i18n="pressure">Pressão</dt><dd id="pressure">—</dd></div>
+        </dl>
+      </div>
+    </section>
+
+    <section class="log">
+      <div class="log-head">
+        <h2 data-i18n="history">Histórico desta sessão</h2>
+        <button type="button" id="clear-history" class="ghost" data-i18n="clear">Limpar</button>
+      </div>
+      <ul id="history-list" class="history"></ul>
+      <p class="empty" id="history-empty" data-i18n="historyEmpty">Ainda não há consultas neste dispositivo.</p>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <p>Developed by <strong>David Arsénio Martins</strong></p>
+    <p>
+      <a href="https://ividi.dev/" target="_blank" rel="noopener">ividi.dev</a>
+      ·
+      <a href="https://github.com/VidiPT89/" target="_blank" rel="noopener">github.com/VidiPT89</a>
+    </p>
+  </footer>
+
+  <script src="/app.js"></script>
+</body>
+</html>
