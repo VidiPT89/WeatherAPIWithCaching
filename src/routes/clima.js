@@ -17,9 +17,6 @@ function createClimaRouter({ redis, apiKey, cacheTtl }) {
       if (!isValidCity(city)) {
         return res.status(400).json({ error: "INVALID_CITY" });
       }
-      if (!apiKey) {
-        return res.status(503).json({ error: "MISSING_API_KEY" });
-      }
 
       const cacheKey = `clima:${lang}:${city.toLowerCase()}`;
       const cached = await redis.get(cacheKey);
