@@ -10,6 +10,7 @@ function createRateLimiter(redis) {
     max,
     standardHeaders: true,
     legacyHeaders: false,
+    passOnStoreError: true,
     keyGenerator: (req) =>
       req.ip || req.headers["x-forwarded-for"] || req.socket.remoteAddress || "unknown",
     message: {
