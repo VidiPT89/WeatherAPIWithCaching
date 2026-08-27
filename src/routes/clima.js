@@ -7,6 +7,14 @@ const {
 } = require("../openweather");
 const { pushHistory, listHistory, clearHistory, resolveUserId } = require("../history");
 
+async function safePushHistory(redis, userId, entry) {
+  try {
+    await pushHistory(redis, userId, entry);
+  } catch (err) {
+    console.error("Failed to record history, continuing:", err.message);
+  }
+}
+
 function createClimaRouter({ redis, apiKey, cacheTtl }) {
   const router = express.Router();
 
@@ -19,26 +27,44 @@ function createClimaRouter({ redis, apiKey, cacheTtl }) {
       }
 
       const cacheKey = `clima:${lang}:${city.toLowerCase()}`;
-      const cached = await redis.get(cacheKey);
+      let cached = null;
+      try {
+        cached = await redis.get(cacheKey);
+      } catch (err) {
+        console.error("Redis GET failed, falling back to live fetch:", err.message);
+      }
+
       if (cached) {
-        const weather = JSON.parse(cached);
-        weather.fromCache = true;
-        const userId = resolveUserId(req);
-        await pushHistory(redis, userId, {
-          city: weather.city,
-          temperature: weather.temperature,
-          fromCache: true,
-          at: new Date().toISOString(),
-        });
-        return res.json(weather);
+        let weather = null;
+        try {
+          weather = JSON.parse(cached);
+        } catch (err) {
+          console.error("Corrupt cache entry, ignoring:", err.message);
+        }
+        if (weather) {
+          weather.fromCache = true;
+          const userId = resolveUserId(req);
+          await safePushHistory(redis, userId, {
+            city: weather.city,
+            temperature: weather.temperature,
+            fromCache: true,
+            at: new Date().toISOString(),
+          });
+          return res.json(weather);
+        }
       }
 
       const raw = await fetchWeather(city, { apiKey, lang });
       const weather = mapWeather(raw, { fromCache: false, lang });
-      await redis.set(cacheKey, JSON.stringify(weather), "EX", cacheTtl);
+
+      try {
+        await redis.set(cacheKey, JSON.stringify(weather), "EX", cacheTtl);
+      } catch (err) {
+        console.error("Redis SET failed, continuing without cache:", err.message);
+      }
 
       const userId = resolveUserId(req);
-      await pushHistory(redis, userId, {
+      await safePushHistory(redis, userId, {
         city: weather.city,
         temperature: weather.temperature,
         fromCache: false,
